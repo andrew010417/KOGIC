@@ -4,7 +4,7 @@
 # Tool: bcftools v1.18
 
 # VCF file path (edit if needed)
-VCF=/BiO/Access/jaehyung/myfirstjob/4krawdata/Korea4K.Final/chr12.recal.vcf
+VCF=/BiO/Access/jaehyung/myfirstjob/4kdata/Korea4K.Final/chr12.recal.vcf
 
 # 1. Check bcftools version
 bcftools --version
