@@ -1,0 +1,15 @@
+# large data
+Korea4K.Final/
+results/
+
+# temp files
+*.vcf
+*.vcf.gz
+*.tbi
+
+# editor / system
+*~
+*.swp
+.DS_Store
+Korea4K.Final/
+results/
