@@ -7,7 +7,6 @@ cd /BiO/Access/jaehyung/myfirstjob/4kdata  # Git 레포 안으로 이동
 3. git commit -m "Modify scripts/XYZ"  # 커밋
 4. git push origin main               # GitHub에 반영
 
-
 2. Github에서 Vs code 업데이트
 1. Github에서 수정 cd /BiO/Access/jaehyung/myfirstjob/4kdata
 2. git pull origin main   # GitHub 변경사항을 로컬로 가져오기
