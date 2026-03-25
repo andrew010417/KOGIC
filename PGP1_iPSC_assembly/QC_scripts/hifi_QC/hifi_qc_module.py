@@ -1,17 +1,37 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import argparse
 import os
+import subprocess
 import pysam
 import matplotlib.pyplot as plt
+import argparse
 
+# ----------------------------
+# NanoPlot QC
+# ----------------------------
+def run_nanoplot(fastq_file, outdir, threads=8):
+    """NanoPlot QC 실행"""
+    os.makedirs(outdir, exist_ok=True)
+    cmd = [
+        "NanoPlot",
+        "--fastq", fastq_file,
+        "--threads", str(threads),
+        "--outdir", outdir
+    ]
+    print(f"[NanoPlot] Running: {' '.join(cmd)}")
+    subprocess.run(cmd, check=True)
+    print(f"[NanoPlot] Done! Results in {outdir}")
+
+# ----------------------------
+# RQ QC
+# ----------------------------
 def check_rq(bam_file, out_file, hist_file):
+    """BAM에서 RQ 통계 계산 및 히스토그램 저장"""
     total = 0
     good = 0
     rq_list = []
 
-    # BAM 읽기
     with pysam.AlignmentFile(bam_file, "rb") as bam:
         for read in bam:
             if read.has_tag("rq"):
@@ -21,17 +41,14 @@ def check_rq(bam_file, out_file, hist_file):
                 if rq >= 0.99:
                     good += 1
 
-    # 통계 계산
     fraction = good / total if total > 0 else 0
     mean_rq = sum(rq_list) / total if total > 0 else 0
     min_rq = min(rq_list) if rq_list else 0
     max_rq = max(rq_list) if rq_list else 0
 
-    # 출력 폴더 생성
     os.makedirs(os.path.dirname(out_file), exist_ok=True)
     os.makedirs(os.path.dirname(hist_file), exist_ok=True)
 
-    # txt 파일 저장
     with open(out_file, "w") as f:
         f.write(f"total RQ tags = {total}\n")
         f.write(f"good RQ tags (>=0.99) = {good}\n")
@@ -42,7 +59,6 @@ def check_rq(bam_file, out_file, hist_file):
 
     print(f"[RQ QC] Done! Results saved to {out_file}")
 
-    # 히스토그램 그리기
     plt.figure(figsize=(8,5))
     plt.hist(rq_list, bins=50, color='skyblue', edgecolor='black')
     plt.title('HiFi Read RQ Distribution')
@@ -52,11 +68,22 @@ def check_rq(bam_file, out_file, hist_file):
     plt.close()
     print(f"[RQ QC] Histogram saved to {hist_file}")
 
+# ----------------------------
+# 독립 실행용
+# ----------------------------
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Check RQ tags in HiFi BAM and plot histogram")
-    parser.add_argument("-b", "--bam", required=True, help="Input BAM file")
-    parser.add_argument("-o", "--out", required=True, help="Output txt file for RQ results")
-    parser.add_argument("-hist", "--hist", required=True, help="Output PNG file for RQ histogram")
+    parser = argparse.ArgumentParser(description="HiFi QC module standalone run")
+    parser.add_argument("--fastq", help="Input FASTQ for NanoPlot")
+    parser.add_argument("--bam", help="Input BAM for RQ check")
+    parser.add_argument("--outdir", required=True, help="Output directory")
+    parser.add_argument("-t", "--threads", type=int, default=8, help="Threads for NanoPlot")
     args = parser.parse_args()
 
-    check_rq(args.bam, args.out, args.hist)
+    if args.fastq:
+        nanoplot_out = os.path.join(args.outdir, "NanoPlot")
+        run_nanoplot(args.fastq, nanoplot_out, args.threads)
+
+    if args.bam:
+        rq_txt = os.path.join(args.outdir, "RQ_results.txt")
+        rq_hist = os.path.join(args.outdir, "RQ_histogram.png")
+        check_rq(args.bam, rq_txt, rq_hist)
